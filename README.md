@@ -37,6 +37,30 @@ NEXT_PUBLIC_API_BASE=http://localhost:8000/api npm run dev
 - `GET /api/research/jobs/{job_id}` 查询任务
 - `GET /api/research/jobs/{job_id}/result` 获取研究结果
 
+## 测试脚本样例
+
+### 自动化测试（推荐）
+
+```bash
+cd backend
+pytest -q
+```
+
+覆盖点：
+- 健康检查与工具目录
+- 工具执行成功/参数错误
+- 聊天流式事件完整性（含自动工具调用）
+- 深度研究任务生命周期
+
+### 手工冒烟脚本
+
+```bash
+cd backend
+python scripts/smoke_test.py
+```
+
+该脚本会依次调用 `/health`、`/tools`、`/tools/execute` 与 `/chat/.../stream`，打印结果用于快速验收。
+
 ## 当前实现说明
 
 - `tool_mode=auto`：根据对话意图自动触发工具
