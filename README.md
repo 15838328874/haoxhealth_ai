@@ -56,13 +56,14 @@ pytest -q
 
 ```bash
 cd backend
-python scripts/smoke_test.py
+python scripts/smoke_demo.py
 ```
 
 该脚本会依次调用 `/health`、`/tools`、`/tools/execute` 与 `/chat/.../stream`，打印结果用于快速验收。
 
 ## 当前实现说明
 
+- 默认模型：`qwen-plus`（可在请求中覆盖）
 - `tool_mode=auto`：根据对话意图自动触发工具
 - 路线规划工具：`amap_route_plan`（当前为可替换的适配器桩实现）
 - 知识库检索：`kb_search`（当前为Milvus链路桩实现）
