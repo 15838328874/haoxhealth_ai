@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 0; }
+.container { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; padding: 16px; }
+.panel { border: 1px solid #ddd; border-radius: 8px; padding: 12px; min-height: 240px; }
+.row { display: flex; gap: 8px; margin-top: 12px; }
+input { flex: 1; padding: 8px; }
+button { padding: 8px 12px; }
