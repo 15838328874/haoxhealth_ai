@@ -8,13 +8,15 @@ from fastapi.responses import StreamingResponse
 from app.schemas.chat import ChatRequest
 from app.schemas.tools import ToolExecuteRequest, ResearchCreateRequest
 from app.services.conversation import ConversationEngine
+from app.services.llm import DashScopeClient
 from app.services.research import ResearchService
 from app.services.tooling import ToolRegistry, ToolExecutor
 
 router = APIRouter(prefix="/api")
 registry = ToolRegistry()
 tool_executor = ToolExecutor(registry)
-engine = ConversationEngine(tool_executor)
+llm_client = DashScopeClient()
+engine = ConversationEngine(tool_executor, llm_client)
 research_service = ResearchService()
 
 
@@ -41,7 +43,12 @@ async def execute_tool(request: ToolExecuteRequest):
 @router.post("/chat/{session_id}/stream")
 async def chat_stream(session_id: str, request: ChatRequest):
     async def event_generator():
-        async for event in engine.stream_reply(request.message):
+        async for event in engine.stream_reply(
+            request.message,
+            model=request.model,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+        ):
             yield event
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

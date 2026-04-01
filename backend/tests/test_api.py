@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import AsyncGenerator
 
 from fastapi.testclient import TestClient
 
+from app.api.routes import engine
 from app.main import app
 
 
@@ -95,6 +97,30 @@ def test_chat_stream_auto_tool_call() -> None:
     assert "tool_call_result" in event_names
     assert "message_delta" in event_names
     assert "message_end" in event_names
+
+
+def test_chat_stream_passes_model_params_to_dashscope_client(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    async def fake_stream_chat(**kwargs) -> AsyncGenerator[str, None]:
+        captured.update(kwargs)
+        yield "ok"
+
+    monkeypatch.setattr(engine.llm_client, "stream_chat", fake_stream_chat)
+
+    with client.stream(
+        "POST",
+        "/api/chat/demo-session/stream",
+        json={"message": "测试模型透传", "model": "qwen-plus", "temperature": 0.2, "max_tokens": 256},
+    ) as response:
+        assert response.status_code == 200
+        body = "".join(chunk for chunk in response.iter_text())
+
+    events = _parse_sse(body)
+    assert any(name == "message_delta" for name, _ in events)
+    assert captured["model"] == "qwen-plus"
+    assert captured["temperature"] == 0.2
+    assert captured["max_tokens"] == 256
 
 
 def test_research_job_lifecycle() -> None:

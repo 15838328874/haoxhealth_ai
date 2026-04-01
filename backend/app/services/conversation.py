@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 
+from app.services.llm import DashScopeClient, DashScopeError
 from app.services.tooling import ToolExecutor
 
 
 class ConversationEngine:
-    def __init__(self, tool_executor: ToolExecutor):
+    def __init__(self, tool_executor: ToolExecutor, llm_client: DashScopeClient):
         self.tool_executor = tool_executor
+        self.llm_client = llm_client
 
-    async def stream_reply(self, user_text: str):
+    async def stream_reply(self, user_text: str, *, model: str, temperature: float, max_tokens: int):
         request_id = f"req_{uuid.uuid4().hex[:12]}"
         message_id = f"msg_{uuid.uuid4().hex[:12]}"
         yield self._sse("message_start", {"request_id": request_id, "message_id": message_id})
@@ -27,12 +28,20 @@ class ConversationEngine:
             except ValueError as exc:
                 yield self._sse("tool_call_error", {"code": str(exc)})
 
-        answer = self._compose_answer(user_text, context_note)
-        for idx, chunk in enumerate(self._chunks(answer, size=12)):
-            await asyncio.sleep(0.01)
-            yield self._sse("message_delta", {"index": idx, "delta": chunk})
+        messages = self._build_messages(user_text, context_note)
+        idx = 0
+        try:
+            async for chunk in self.llm_client.stream_chat(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ):
+                yield self._sse("message_delta", {"index": idx, "delta": chunk})
+                idx += 1
+        except DashScopeError as exc:
+            yield self._sse("error", {"code": exc.code, "message": str(exc)})
 
-        yield self._sse("usage", {"prompt_tokens": 120, "completion_tokens": 210, "total_tokens": 330})
         yield self._sse("message_end", {"message_id": message_id, "finish_reason": "stop"})
 
     def _decide_tool(self, text: str) -> dict | None:
@@ -46,12 +55,14 @@ class ConversationEngine:
             return {"name": "kb_search", "args": {"query": text}}
         return None
 
-    def _compose_answer(self, user_text: str, context_note: str) -> str:
-        base = f"已收到你的问题：{user_text}。"
+    def _build_messages(self, user_text: str, context_note: str) -> list[dict[str, str]]:
+        system_prompt = "你是一个专业、简洁的中文AI助手。"
         if context_note:
-            base += f"\n\n工具结果：{context_note}"
-        base += "\n\n这是v1实现，支持自动工具调用、SSE流式输出与异步研究任务。"
-        return base
+            system_prompt += f" 你可以参考以下工具结果：{context_note}"
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_text},
+        ]
 
     def _tool_to_text(self, result: dict) -> str:
         payload = result.get("result", {})
@@ -60,11 +71,6 @@ class ConversationEngine:
         if "hits" in payload:
             return f"命中{len(payload['hits'])}条知识片段。"
         return json.dumps(payload, ensure_ascii=False)
-
-    @staticmethod
-    def _chunks(text: str, size: int):
-        for i in range(0, len(text), size):
-            yield text[i : i + size]
 
     @staticmethod
     def _sse(event: str, data: dict) -> str:

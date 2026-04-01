@@ -24,6 +24,8 @@ uvicorn app.main:app --reload --port 8000
 
 ```env
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+AMAP_API_KEY=你的高德Key
+DASHSCOPE_API_KEY=你的阿里云百炼Key
 ```
 
 ## 前端启动
@@ -70,6 +72,7 @@ python scripts/smoke_demo.py
 ## 当前实现说明
 
 - 默认模型：`qwen-plus`（可在请求中覆盖）
+- 聊天模型通过 DashScope 兼容接口调用（读取 `DASHSCOPE_API_KEY`）
 - `tool_mode=auto`：根据对话意图自动触发工具
 - 路线规划工具：`amap_route_plan`（当前为可替换的适配器桩实现）
 - 知识库检索：`kb_search`（当前为Milvus链路桩实现）
