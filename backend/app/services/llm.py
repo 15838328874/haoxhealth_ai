@@ -29,10 +29,7 @@ class DashScopeClient:
         max_tokens: int,
     ):
         if not settings.dashscope_api_key:
-            fallback = "未配置 DASHSCOPE_API_KEY，当前返回本地降级响应。"
-            for chunk in self._chunks(fallback, 12):
-                yield chunk
-            return
+            raise DashScopeError("DASHSCOPE_API_KEY_MISSING", "DASHSCOPE_API_KEY is required for online inference.")
 
         payload = {
             "model": model,
@@ -82,8 +79,3 @@ class DashScopeClient:
                     code = exc.code if isinstance(exc, DashScopeError) else "DASHSCOPE_TIMEOUT_OR_NETWORK"
                     raise DashScopeError(code, str(exc)) from exc
                 await asyncio.sleep(0.2 * (attempt + 1))
-
-    @staticmethod
-    def _chunks(text: str, size: int):
-        for i in range(0, len(text), size):
-            yield text[i : i + size]

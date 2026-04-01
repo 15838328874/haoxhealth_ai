@@ -1,0 +1,16 @@
+:root { font-family: Inter, system-ui, Arial; color: #e5e7eb; background: #0b1020; }
+body { margin: 0; }
+.layout { max-width: 1100px; margin: 0 auto; min-height: 100vh; padding: 20px; display: grid; grid-template-rows: auto 1fr auto auto; gap: 16px; }
+header { display:flex; justify-content:space-between; align-items:center; }
+main { display:grid; grid-template-columns: 1fr 280px; gap: 16px; min-height: 60vh; }
+.chat { background:#131a2e; border-radius:12px; padding:16px; overflow:auto; display:flex; flex-direction:column; gap:10px; }
+.bubble { max-width: 80%; padding:10px 12px; border-radius:12px; }
+.bubble.user { align-self:flex-end; background:#2463eb; }
+.bubble.assistant { align-self:flex-start; background:#1f2937; }
+aside { background:#131a2e; border-radius:12px; padding:12px; overflow:auto; }
+.evt { border-bottom: 1px solid #253047; padding: 8px 0; display:flex; justify-content:space-between; }
+footer { display:flex; gap: 10px; }
+input { flex:1; background:#111827; color:#e5e7eb; border:1px solid #2d3a56; border-radius:10px; padding:12px; }
+button { background:#2563eb; color:white; border:0; border-radius:10px; padding:0 16px; }
+.error { color: #f87171; }
+@media (max-width: 900px){ main { grid-template-columns: 1fr; } }

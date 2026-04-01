@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     dashscope_timeout_seconds: float = 30.0
     dashscope_max_retries: int = 1
+    tool_timeout_seconds: float = 15.0
+    kb_search_endpoint: str = ""
+    kb_search_api_key: str = ""
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")

@@ -26,6 +26,8 @@ uvicorn app.main:app --reload --port 8000
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 AMAP_API_KEY=你的高德Key
 DASHSCOPE_API_KEY=你的阿里云百炼Key
+KB_SEARCH_ENDPOINT=https://your-kb-service/api/search
+KB_SEARCH_API_KEY=your-kb-service-key
 ```
 
 `CORS_ORIGINS` 也支持 JSON 数组格式：
@@ -39,7 +41,7 @@ CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
 ```bash
 cd frontend
 npm install
-NEXT_PUBLIC_API_BASE=http://localhost:8000/api npm run dev
+VITE_API_BASE=http://localhost:8000/api npm run dev
 ```
 
 ## 核心接口
@@ -80,6 +82,6 @@ python scripts/smoke_demo.py
 - 默认模型：`qwen-plus`（可在请求中覆盖）
 - 聊天模型通过 DashScope 兼容接口调用（读取 `DASHSCOPE_API_KEY`）
 - `tool_mode=auto`：根据对话意图自动触发工具
-- 路线规划工具：`amap_route_plan`（当前为可替换的适配器桩实现）
-- 知识库检索：`kb_search`（当前为Milvus链路桩实现）
+- 路线规划工具：`amap_route_plan`（调用高德在线接口）
+- 知识库检索：`kb_search`（调用你配置的在线检索服务 `KB_SEARCH_ENDPOINT`）
 - 深度研究：异步任务状态机（queued/planning/searching/synthesizing/completed）

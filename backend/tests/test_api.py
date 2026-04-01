@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi.testclient import TestClient
 
-from app.api.routes import engine
+from app.api.routes import engine, tool_executor
 from app.main import app
 
 
@@ -64,7 +64,14 @@ def test_cors_preflight_for_chat_stream() -> None:
     assert loopback.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
 
 
-def test_tool_execute_and_validation() -> None:
+def test_tool_execute_and_validation(monkeypatch) -> None:
+    async def fake_route(arguments: dict) -> dict:
+        if not arguments.get("origin") or not arguments.get("destination"):
+            raise ValueError("TOOL_BAD_ARGUMENTS")
+        return {"distance_m": 1234, "duration_s": 567, "steps": ["step1"], "source": "amap"}
+
+    monkeypatch.setattr(tool_executor, "_amap_route_plan", fake_route)
+
     ok = client.post(
         "/api/tools/execute",
         json={
@@ -77,7 +84,7 @@ def test_tool_execute_and_validation() -> None:
     assert ok.status_code == 200
     payload = ok.json()["data"]
     assert payload["tool_name"] == "amap_route_plan"
-    assert payload["result"]["distance_m"] > 0
+    assert payload["result"]["distance_m"] == 1234
 
     bad = client.post(
         "/api/tools/execute",
@@ -91,7 +98,21 @@ def test_tool_execute_and_validation() -> None:
     assert bad.status_code == 400
 
 
-def test_chat_stream_auto_tool_call() -> None:
+def test_chat_stream_auto_tool_call(monkeypatch) -> None:
+    async def fake_execute(tool_name: str, arguments: dict) -> dict:
+        return {
+            "tool_call_id": "tc_mock",
+            "tool_name": tool_name,
+            "latency_ms": 3,
+            "result": {"distance_m": 100, "duration_s": 10, "steps": ["mock-step"], "source": "amap"},
+        }
+
+    async def fake_stream_chat(**_: object) -> AsyncGenerator[str, None]:
+        yield "模型流式片段"
+
+    monkeypatch.setattr(engine.tool_executor, "execute", fake_execute)
+    monkeypatch.setattr(engine.llm_client, "stream_chat", fake_stream_chat)
+
     with client.stream(
         "POST",
         "/api/chat/demo-session/stream",
@@ -117,6 +138,10 @@ def test_chat_stream_passes_model_params_to_dashscope_client(monkeypatch) -> Non
         yield "ok"
 
     monkeypatch.setattr(engine.llm_client, "stream_chat", fake_stream_chat)
+    async def fake_execute(tool_name: str, arguments: dict) -> dict:
+        return {"tool_call_id": "tc_x", "tool_name": tool_name, "latency_ms": 1, "result": arguments}
+
+    monkeypatch.setattr(engine.tool_executor, "execute", fake_execute)
 
     with client.stream(
         "POST",
