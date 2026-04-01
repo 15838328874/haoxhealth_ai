@@ -40,6 +40,18 @@ def test_health_and_tools_listing() -> None:
     assert "kb_search" in names
 
 
+def test_cors_preflight_for_chat_stream() -> None:
+    response = client.options(
+        "/api/chat/demo-session/stream",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+
 def test_tool_execute_and_validation() -> None:
     ok = client.post(
         "/api/tools/execute",

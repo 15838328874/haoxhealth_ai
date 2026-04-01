@@ -20,6 +20,12 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
+可选环境变量（`backend/.env`）：
+
+```env
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
 ## 前端启动
 
 ```bash
@@ -68,4 +74,3 @@ python scripts/smoke_demo.py
 - 路线规划工具：`amap_route_plan`（当前为可替换的适配器桩实现）
 - 知识库检索：`kb_search`（当前为Milvus链路桩实现）
 - 深度研究：异步任务状态机（queued/planning/searching/synthesizing/completed）
-
