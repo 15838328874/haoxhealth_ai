@@ -53,6 +53,16 @@ def test_cors_preflight_for_chat_stream() -> None:
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
 
+    loopback = client.options(
+        "/api/chat/demo-session/stream",
+        headers={
+            "Origin": "http://127.0.0.1:5173",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert loopback.status_code == 200
+    assert loopback.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
 
 def test_tool_execute_and_validation() -> None:
     ok = client.post(

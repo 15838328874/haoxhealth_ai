@@ -28,6 +28,12 @@ AMAP_API_KEY=你的高德Key
 DASHSCOPE_API_KEY=你的阿里云百炼Key
 ```
 
+`CORS_ORIGINS` 也支持 JSON 数组格式：
+
+```env
+CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+```
+
 ## 前端启动
 
 ```bash
